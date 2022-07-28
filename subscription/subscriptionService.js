@@ -1,6 +1,7 @@
 const nodemailer = require('nodemailer');
 const subscriptionRepository = require('./subscriptionRepository');
-const tickerPriceService = require('../ticker_price/tickerPriceService')
+const tickerPriceService = require('../ticker_price/tickerPriceService');
+const {EmailAlreadySubscribedError, ValidationError} = require('./subscriptionError');
 
 const transporter = nodemailer.createTransport({
     pool: true,
@@ -17,9 +18,9 @@ const transporter = nodemailer.createTransport({
 
 async function sendPriceInfoToAllSubscribers(tickerSymbol) {
     const price = await tickerPriceService.getCurrentTickerPrice(tickerSymbol);
-    const errorMails = [];
-    const subscriberMails = await subscriptionRepository.getAllSubscriberMails();
-    for (const email of subscriberMails) {
+    const errorEmails = [];
+    const subscriberEmails = await subscriptionRepository.getAllSubscriberEmails();
+    for (const email of subscriberEmails) {
         try {
             const userName = email.split('@')[0];
             const mailOptions = {
@@ -35,16 +36,38 @@ async function sendPriceInfoToAllSubscribers(tickerSymbol) {
                 `,
             };
             const result = await transporter.sendMail(mailOptions);
-            errorMails.push(...result.rejected);
+            errorEmails.push(...result.rejected);
 
         } catch {
-            errorMails.push(email);
+            errorEmails.push(email);
         }
     }
 
-    return errorMails;
+    return errorEmails;
+}
+
+async function subscribeEmail(email) {
+    if (!isEmailValid(email)) {
+        throw new ValidationError('Email is not valid');
+    }
+
+    const subscriberEmails = await subscriptionRepository.getAllSubscriberEmails();
+    if (subscriberEmails.includes(email)) {
+        throw new EmailAlreadySubscribedError(`Current email (${email}) has already been subscribed`);
+    }
+
+    await subscriptionRepository.saveSubscriberEmail(email);
+}
+
+function isEmailValid(email) {
+    return String(email)
+        .toLowerCase()
+        .match(
+            /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
+        );
 }
 
 module.exports = {
     sendPriceInfoToAllSubscribers,
+    subscribeEmail,
 }
