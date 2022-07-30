@@ -3,7 +3,7 @@ const tickerPriceService = require('./tickerPriceService');
 
 router.get('/rate',async function (req, res, next) {
     try {
-        const tickerSymbol = process.env.TICKER_SYMBOL; // can be extracted from request
+        const tickerSymbol = process.env.TICKER_SYMBOL; // could be extracted from request
         const price = await tickerPriceService.getCurrentTickerPrice(tickerSymbol);
         res.status(200);
         res.json(price);

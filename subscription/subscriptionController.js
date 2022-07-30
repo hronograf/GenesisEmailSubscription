@@ -21,7 +21,7 @@ router.post('/subscribe', async function (req, res, next) {
 });
 
 router.post('/sendEmails',async function (req, res, next) {
-    const tickerSymbol = process.env.TICKER_SYMBOL; // can be extracted from request
+    const tickerSymbol = process.env.TICKER_SYMBOL; // could be extracted from request
     const errorEmails = await subscriptionService.sendPriceInfoToAllSubscribers(tickerSymbol);
     res.status(200);
     if (errorEmails.length !== 0) {
