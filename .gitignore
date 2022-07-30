@@ -1,6 +1,9 @@
 # WebStorm
 .idea
 
+# application data
+data
+
 # Logs
 logs
 *.log

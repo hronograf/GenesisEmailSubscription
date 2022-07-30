@@ -4,7 +4,7 @@ const {EmailAlreadySubscribedError, ValidationError} = require('./subscriptionEr
 
 router.post('/subscribe', async function (req, res, next) {
     try {
-        await subscriptionService.subscribeEmail(req.body.email);
+        subscriptionService.subscribeEmail(req.body.email);
         res.status(200);
         res.json();
     } catch (err) {
@@ -14,6 +14,8 @@ router.post('/subscribe', async function (req, res, next) {
         } else if (err instanceof ValidationError) {
             res.status(400);
             res.json({'message': err.message});
+        } else {
+            throw err;
         }
     }
 });

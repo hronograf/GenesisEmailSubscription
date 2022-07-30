@@ -19,8 +19,8 @@ const transporter = nodemailer.createTransport({
 async function sendPriceInfoToAllSubscribers(tickerSymbol) {
     const price = await tickerPriceService.getCurrentTickerPrice(tickerSymbol);
     const errorEmails = [];
-    const subscriberEmails = await subscriptionRepository.getAllSubscriberEmails();
-    for (const email of subscriberEmails) {
+    const subscriberEmailsAsyncIterator = subscriptionRepository.getAllSubscriberEmailsAsyncIterator(); // todo maybe refactor to something like getFirstNEmails(10, start=10)
+    for await (const email of subscriberEmailsAsyncIterator) {
         try {
             const userName = email.split('@')[0];
             const mailOptions = {
@@ -38,7 +38,8 @@ async function sendPriceInfoToAllSubscribers(tickerSymbol) {
             const result = await transporter.sendMail(mailOptions);
             errorEmails.push(...result.rejected);
 
-        } catch {
+        } catch (err) {
+            console.log(err);
             errorEmails.push(email);
         }
     }
@@ -46,17 +47,15 @@ async function sendPriceInfoToAllSubscribers(tickerSymbol) {
     return errorEmails;
 }
 
-async function subscribeEmail(email) {
-    if (!isEmailValid(email)) {
+// Function was written in synchronous way to prevent two simultaneous savings of one email address (check and save email transaction)
+function subscribeEmail(emailToSubscribe) {
+    if (!isEmailValid(emailToSubscribe)) {
         throw new ValidationError('Email is not valid');
     }
-
-    const subscriberEmails = await subscriptionRepository.getAllSubscriberEmails();
-    if (subscriberEmails.includes(email)) {
-        throw new EmailAlreadySubscribedError(`Current email (${email}) has already been subscribed`);
+    if (subscriptionRepository.emailAlreadySubscribed(emailToSubscribe)) {
+        throw new EmailAlreadySubscribedError(`Current email (${emailToSubscribe}) has already been subscribed`);
     }
-
-    await subscriptionRepository.saveSubscriberEmail(email);
+    subscriptionRepository.saveSubscriberEmail(emailToSubscribe);
 }
 
 function isEmailValid(email) {
