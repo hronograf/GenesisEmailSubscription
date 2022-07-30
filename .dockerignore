@@ -1,0 +1,9 @@
+.git
+.idea
+
+node_modules
+npm-debug.log
+
+data
+# uncomment this for production and add your secrets by "docker secret create" command
+# .env
