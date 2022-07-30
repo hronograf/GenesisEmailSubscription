@@ -19,7 +19,7 @@ const transporter = nodemailer.createTransport({
 async function sendPriceInfoToAllSubscribers(tickerSymbol) {
     const price = await tickerPriceService.getCurrentTickerPrice(tickerSymbol);
     const errorEmails = [];
-    const subscriberEmailsAsyncIterator = subscriptionRepository.getAllSubscriberEmailsAsyncIterator(); // todo maybe refactor to something like getFirstNEmails(10, start=10)
+    const subscriberEmailsAsyncIterator = subscriptionRepository.getAllSubscriberEmailsAsyncIterator();
     for await (const email of subscriberEmailsAsyncIterator) {
         try {
             const userName = email.split('@')[0];
